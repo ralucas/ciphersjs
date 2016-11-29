@@ -12,56 +12,74 @@ function invertMap(obj) {
   return output;
 }
 
-function Caesar(mapping) {
-  if (!mapping || !isObject(mapping)) {
-    throw new Error('Mapping required');
-  }
-  this.map = this.createMap(mapping);
-}
-
-Caesar.prototype.createMap = function createMap(obj) {
-  var mapped = {};
-  var output = {};
-  for (var key in obj) {
-    mapped[key] = obj[key].toString().charCodeAt(0);
-  }
-  var a = mapped[Object.keys(mapped)[0]];
-  var keyCode = Object.keys(mapped)[0].toString().charCodeAt(0);
+function getRandomLetter() {
   var charA = 'A'.charCodeAt(0);
   var charZ = 'Z'.charCodeAt(0);
-  for (var i = 0; i < 26; i++) {
-    var g = (a + i) - charZ;
-    var h = (keyCode + i) - charZ;
-    var newKeyCode = keyCode + i;
-    var cc = String.fromCharCode(a + i);
-    if (g > 0) {
-      cc = String.fromCharCode(charA + (g-1));
-    }
-    if (h > 0) {
-      newKeyCode = charA + (h-1);
-    }
-    output[String.fromCharCode(newKeyCode)] = cc;
+  return Math.floor(
+    Math.random() * (charZ - charA)
+  );
+}
+
+function Caesar(offset) {
+  if (!offset || typeof offset != 'number') {
+    throw new Error('Offset required');
   }
-  return output; 
-};
+  this.offset = offset;
+  this.charA = 'A'.charCodeAt(0);
+  this.charZ = 'Z'.charCodeAt(0);
+}
 
 Caesar.prototype.decrypt = function decrypt(str) {
-  var m = this.map;
+  var _this = this;
   var words = str.split(' ');
   return words.map((word) => {
     return word.split('').map((letter) => {
-      return m[letter];
+      var charCode = _this.charA + ((letter.charCodeAt(0) - _this.charA) % 26) - this.offset;
+      if ( charCode > _this.charZ ) {
+        charCode = (charCode - _this.charZ) + _this.charA; 
+      }
+      return String.fromCharCode(charCode);
     }).join('');
   }).join(' ');
 };
 
 Caesar.prototype.encrypt = function encrypt(str) {
-  var m = invertMap(this.map);
+  var _this = this;
   var words = str.split(' ');
   return words.map((word) => {
     return word.split('').map((letter) => {
-      return m[letter];
+      var charCode = _this.charA + ((letter.charCodeAt(0) - _this.charA) % 26) + this.offset;
+      if ( charCode > _this.charZ ) {
+        charCode = (charCode - _this.charZ) + _this.charA; 
+      }
+      return String.fromCharCode(charCode);
     }).join('');
   }).join(' ');
 };
 
+function Monoalphabetic() {
+  this.map = this.createMap();
+}
+
+Monoalphabetic.prototype.createMap = function createMap() {
+  var output = {};
+  var charA = 'A'.charCodeAt(0);
+  var charZ = 'Z'.charCodeAt(0);
+  var tmpArray = [];
+  for (var i = 0; i < 26; i++) {
+    var key = String.fromCharCode(charA + i);
+    var randomLetter = getRandomLetter();
+    if ( ~tmpArray.indexOf(randomLetter) ) {
+      output[key] = randomLetter; 
+      tmpArray.push(randomLetter);
+    } else {
+      // try to get another random letter 
+    }
+  }
+  return output; 
+};
+
+function Vigenere(key) {
+  this.key = key;
+  this.map = this.createMap();
+}
