@@ -1,0 +1,1 @@
+//XOR of every block
